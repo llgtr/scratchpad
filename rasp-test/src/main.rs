@@ -4,7 +4,6 @@ use std::io::BufReader;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
-use serde_json::value::Value;
 use chrono::{FixedOffset, TimeZone};
 
 #[derive(Deserialize, Clone)]
@@ -64,13 +63,15 @@ struct WeatherApiResponse {
 #[derive(Deserialize, Debug)]
 struct Stoptime {
     headsign: String,
-    realtimeDeparture: i64,
+    #[serde(rename(deserialize = "realtimeDeparture"))]
+    realtime_departure: i64,
 }
 
 #[derive(Deserialize, Debug)]
 struct Stop {
     name: String,
-    stoptimesWithoutPatterns: Vec<Stoptime>
+    #[serde(rename(deserialize = "stoptimesWithoutPatterns"))]
+    stoptimes_without_patterns: Vec<Stoptime>
 }
 
 #[derive(Deserialize, Debug)]
@@ -160,9 +161,9 @@ fn main() {
 
     let stop_info = get_stop_info(&config.stopid, &client).data.stop;
     println!("{}", stop_info.name);
-    for stoptime in stop_info.stoptimesWithoutPatterns.iter().take(2) {
+    for stoptime in stop_info.stoptimes_without_patterns.iter().take(2) {
         let headsign = &stoptime.headsign;
-        let dep_delta = stoptime.realtimeDeparture;
+        let dep_delta = stoptime.realtime_departure;
         println!("{} @ {}", headsign, dep_delta);
     }
 }
