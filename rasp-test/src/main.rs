@@ -143,13 +143,13 @@ fn main() {
     let uvi = &current_weather.uvi;
     let wind_speed = &current_weather.wind_speed;
     let wind_deg = &current_weather.wind_deg;
-    println!("{}", updated_at);
-    println!("{}", description);
-    println!("{}", sunrise);
-    println!("{}", sunset);
-    println!("{:.2}", uvi);
-    println!("{} m/s", wind_speed);
-    println!("{}°", wind_deg);
+    println!("updated: {}", updated_at);
+    println!("description: {}", description);
+    println!("sunrise: {}", sunrise);
+    println!("sunset: {}", sunset);
+    println!("uvi: {:.2}", uvi);
+    println!("wind speed: {} m/s", wind_speed);
+    println!("wind direction: {}°", wind_deg);
 
     for hour in hourly_weather.iter().step_by(2).take(6) {
         let hour_at = offset.timestamp(hour.dt, 0);
