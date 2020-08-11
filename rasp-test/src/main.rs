@@ -1,8 +1,8 @@
-use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
+use reqwest::blocking::Response;
 use serde::{Deserialize, Serialize};
 use chrono::{FixedOffset, TimeZone};
 
@@ -84,7 +84,17 @@ struct HslApiResponse {
     data: StopData
 }
 
-fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {
+fn get_api_response(response: Result<Response, reqwest::Error>) -> String {
+    match response {
+        Ok(r) => match r.text() {
+            Ok(t) => t,
+            Err(_) => panic!("Response malformed")
+        },
+        Err(e) => panic!("Request failed: {}", e)
+    }
+}
+
+fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Config, std::io::Error> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
 
@@ -102,9 +112,13 @@ fn get_weather_info(config: Config, client: &reqwest::blocking::Client) -> Weath
         units: String::from("metric"),
         appid: config.appid
     };
-    return serde_json::from_str(&client.get(api_url)
-        .query(&params)
-        .send().unwrap().text().unwrap()).unwrap();
+
+    match serde_json::from_str(
+        &get_api_response(client.get(api_url).query(&params).send())
+    ) {
+        Ok(s) => s,
+        Err(_) => panic!("Deserialization failed for weather API's response")
+    }
 }
 
 fn get_stop_info(stopid: &str, client: &reqwest::blocking::Client) -> HslApiResponse {
@@ -121,13 +135,20 @@ fn get_stop_info(stopid: &str, client: &reqwest::blocking::Client) -> HslApiResp
 }}
 ", stopid);
 
-    return serde_json::from_str(&client.post(api_url)
-        .body(query)
-        .send().unwrap().text().unwrap()).unwrap();
+    match serde_json::from_str(
+        &get_api_response(client.post(api_url).body(query).send())
+    ) {
+        Ok(s) => s,
+        Err(_) => panic!("Deserialization failed for HSL API's response")
+    }
 }
 
 fn main() {
-    let config = read_config_from_file("config.json").unwrap();
+    let config = match read_config_from_file("config.json") {
+        Ok(c) => c,
+        _ => panic!("Configuration file missing!")
+    };
+
     let client = reqwest::blocking::Client::new();
 
     let weather_info = get_weather_info(config.clone(), &client);
@@ -137,7 +158,10 @@ fn main() {
     let offset = FixedOffset::east(weather_info.timezone_offset);
 
     let updated_at = offset.timestamp(current_weather.dt, 0);
-    let description = &current_weather.weather.get(0).unwrap().description;
+    let description = match current_weather.weather.get(0) {
+        Some(d) => &d.description,
+        None => "N/A"
+    };
     let sunrise = offset.timestamp(current_weather.sunrise, 0);
     let sunset = offset.timestamp(current_weather.sunset, 0);
     let uvi = &current_weather.uvi;
