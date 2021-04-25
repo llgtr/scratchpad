@@ -1,0 +1,23 @@
+{:nrepl {:port 8777}
+
+ :source-paths ["src/cljs"]
+
+ :dependencies
+ [[reagent "1.0.0"]]
+
+ :dev-http
+ {8280 "resources/public"}
+
+ :builds
+ {:app
+  {:target :browser
+   :output-dir "resources/public/js/compiled"
+   :asset-path "/js/compiled"
+   :modules
+   {:app {:init-fn vihkonen.core/init}}
+   :devtools
+   {:preloads []}
+   :dev
+   {:compiler-options
+    {:closure-defines
+     { }}}}}}
