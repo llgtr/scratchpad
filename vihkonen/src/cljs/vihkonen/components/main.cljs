@@ -40,7 +40,7 @@
      [:h4 {:style {:border-bottom "4px solid black" :margin-top "20px"}}
       "Highest by payee"]
      (for [[payee amount] breakdown]
-       ^{:key (gensym)} [:p payee ", " amount])]))
+       ^{:key (gensym)} [:p payee ", " (format-two-decimals amount)])]))
 
 (defn card [month-mm transactions]
   (let [amount->float (comp js/parseFloat #(str/replace % #"," ".") :amount)
